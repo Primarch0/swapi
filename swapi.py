@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import requests
 
 
@@ -34,23 +34,20 @@ class SWRequester(APIRequester):
 
     def get_sw_info(self, sw_type):
         sw_type = sw_type.strip("/")
-        url = f"{self.base_url}/{sw_type}/"
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
+        response = self.get(sw_type)  
+        if response:
             return response.text
-        except requests.exceptions.RequestException:
-            print("Возникла ошибка при выполнении запроса")
-            return "Ошибка при получении данных."
+        return "Ошибка при получении данных."
 
 
 def save_sw_data():
+    data_dir = Path("data")  
+    data_dir.mkdir(exist_ok=True)  
+
     sw = SWRequester()
-    os.makedirs("data", exist_ok=True)
     categories = sw.get_sw_categories()
 
     for category in categories:
         data = sw.get_sw_info(category)
-        file_path = os.path.join("data", f"{category}.txt")
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(data)
+        file_path = data_dir / f"{category}.txt"  
+        file_path.write_text(data, encoding="utf-8")
